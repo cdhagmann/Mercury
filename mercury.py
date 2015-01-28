@@ -159,10 +159,10 @@ def create_cfg_file():
 
 
     EMAIL_PROVIDER = raw_input('WHAT IS YOUR EMAIL PROVIDER (e.g. gmail): ')
-    while EMAIL_PROVIDER not in smtp_cache:
+    while EMAIL_PROVIDER not in smtp_servers:
         print EMAIL_PROVIDER + " is not currently supported.".upper()
         print "Please select on of the follows:".upper()
-        for sp in smtp_cache:
+        for sp in smtp_servers:
             print "\t" + sp
         EMAIL_PROVIDER = raw_input('WHAT IS YOUR EMAIL PROVIDER (e.g. gmail): ')
     config.set('Text_Notification', 'EMAIL_PROVIDER', EMAIL_PROVIDER)
