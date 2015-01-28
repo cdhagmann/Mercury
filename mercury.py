@@ -9,8 +9,17 @@ from collections import defaultdict
 ########################################################################
 ########################################################################
 
-smtp_servers = {'gmail': ('smtp.gmail.com', 587),
-              'gmx': ('smtp.gmx.com', (25, 465))}
+smtp_servers = {}
+smtp_servers['gmail'] = ('smtp.gmail.com', (587,))
+smtp_servers['outlook'] = ('smtp.live.com', (587,))
+smtp_servers['gmx'] = ('smtp.gmx.com', (25, 465))
+smtp_servers['office365'] = ('smtp.office365.com', (587,))
+smtp_servers['yahoo mail'] = ('smtp.mail.yahoo.com', (465,))
+smtp_servers['att'] = ('smtp.att.yahoo.com', (465,))
+smtp_servers['hotmail'] = ('smtp.live.com', (587,))
+smtp_servers['comcast'] = ('smtp.comcast.com', (587,))
+smtp_servers['mail.com'] = ('smtp.mail.com', (465,))
+
 
 #######################################################################
 
@@ -42,7 +51,7 @@ providers['verizon'] = {'sms': 'vtext.com',
 
 
 @contextmanager
-def email_server(smtp_server, port=25, username=None, password=None):
+def email_server(smtp_server, port=None, username=None, password=None):
     """
     Create an instance of smtplib.SMTP using the context manager in order
     to automatically handle the proper opening and closing of the SMTP
