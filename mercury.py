@@ -4,22 +4,16 @@ from email.MIMEText import MIMEText
 import smtplib, requests, ConfigParser, os
 from collections import defaultdict
 
+script_path = os.path.dirname(os.path.abspath( __file__ ))
+cfg_file = os.path.join(script_path, 'mercury.cfg')
+
 
 ########################################################################
 ########################################################################
 ########################################################################
 
-smtp_servers = {}
-smtp_servers['gmail'] = ('smtp.gmail.com', (587,))
-smtp_servers['outlook'] = ('smtp.live.com', (587,))
-smtp_servers['gmx'] = ('smtp.gmx.com', (25, 465))
-smtp_servers['office365'] = ('smtp.office365.com', (587,))
-smtp_servers['yahoo mail'] = ('smtp.mail.yahoo.com', (465,))
-smtp_servers['att'] = ('smtp.att.yahoo.com', (465,))
-smtp_servers['hotmail'] = ('smtp.live.com', (587,))
-smtp_servers['comcast'] = ('smtp.comcast.com', (587,))
-smtp_servers['mail.com'] = ('smtp.mail.com', (465,))
-
+smtp_servers = {'gmail': ('smtp.gmail.com', 587),
+              'gmx': ('smtp.gmx.com', (25, 465))}
 
 #######################################################################
 
@@ -51,7 +45,7 @@ providers['verizon'] = {'sms': 'vtext.com',
 
 
 @contextmanager
-def email_server(smtp_server, port=None, username=None, password=None):
+def email_server(smtp_server, port=25, username=None, password=None):
     """
     Create an instance of smtplib.SMTP using the context manager in order
     to automatically handle the proper opening and closing of the SMTP
@@ -159,10 +153,10 @@ def create_cfg_file():
 
 
     EMAIL_PROVIDER = raw_input('WHAT IS YOUR EMAIL PROVIDER (e.g. gmail): ')
-    while EMAIL_PROVIDER not in smtp_servers:
+    while EMAIL_PROVIDER not in smtp_cache:
         print EMAIL_PROVIDER + " is not currently supported.".upper()
         print "Please select on of the follows:".upper()
-        for sp in smtp_servers:
+        for sp in smtp_cache:
             print "\t" + sp
         EMAIL_PROVIDER = raw_input('WHAT IS YOUR EMAIL PROVIDER (e.g. gmail): ')
     config.set('Text_Notification', 'EMAIL_PROVIDER', EMAIL_PROVIDER)
@@ -204,15 +198,17 @@ def create_cfg_file():
     config.set('Text_Notification', 'PHONE_ADDRESS', PHONE_ADDRESS)
 
     # Writing our configuration file to 'example.cfg'
-    with open('mercury.cfg', 'wb') as configfile:
+    with open(cfg_file, 'wb') as configfile:
         config.write(configfile)
 
 ########################################################################
 ########################################################################
 ########################################################################
 
-if not os.path.isfile('mercury.cfg'):
+if not os.path.isfile(cfg_file):
+    print "Script file is ", script_path
+    print "cfg_file is ", cfg_file
     create_cfg_file()
 
 config = ConfigParser.RawConfigParser()
-config.read('mercury.cfg')
+config.read(cfg_file)
