@@ -3,6 +3,8 @@ from contextlib import contextmanager
 from email.MIMEText import MIMEText
 import smtplib, requests, ConfigParser, os
 from collections import defaultdict
+import httplib, urllib
+
 
 script_path = os.path.dirname(os.path.abspath( __file__ ))
 cfg_file = os.path.join(script_path, 'mercury.cfg')
@@ -130,6 +132,15 @@ def text_notification(message, subject=None):
                      subject=subject, debug=False)
 
 
+def Pushover_Notification(message):
+    conn = httplib.HTTPSConnection("api.pushover.net:443")
+    data = urllib.urlencode({"token": config.get('Pushover_Notification', 'app_token'),
+                             "user": config.get('Pushover_Notification', 'user_key'),
+                             "message": message})
+    headers = { "Content-type": "application/x-www-form-urlencoded" }
+    conn.request("POST", "/1/messages.json", data, headers)
+    conn.getresponse()
+
 ########################################################################
 ########################################################################
 ########################################################################
@@ -153,10 +164,10 @@ def create_cfg_file():
 
 
     EMAIL_PROVIDER = raw_input('WHAT IS YOUR EMAIL PROVIDER (e.g. gmail): ')
-    while EMAIL_PROVIDER not in smtp_cache:
+    while EMAIL_PROVIDER not in smtp_servers:
         print EMAIL_PROVIDER + " is not currently supported.".upper()
         print "Please select on of the follows:".upper()
-        for sp in smtp_cache:
+        for sp in smtp_servers:
             print "\t" + sp
         EMAIL_PROVIDER = raw_input('WHAT IS YOUR EMAIL PROVIDER (e.g. gmail): ')
     config.set('Text_Notification', 'EMAIL_PROVIDER', EMAIL_PROVIDER)
@@ -199,6 +210,39 @@ def create_cfg_file():
 
     # Writing our configuration file to 'example.cfg'
     with open(cfg_file, 'wb') as configfile:
+        config.write(configfile)
+
+    ans = raw_input('DO YOU WANT TO SET UP YOUR PUSHOVER APP AS WELL? [Y/n]')
+    if ans.lower() in ('', 'y', 'yes'):
+        append_cfg_file()
+
+
+def append_cfg_file():
+    '''
+    Append the .cfg files that store the account information used by Mercury
+    to send push notifications in a Python script via Pushover. Appends 'mercury.cfg'
+    '''
+
+    config = ConfigParser.RawConfigParser()
+    config.add_section('Pushover_Notification')
+
+
+    APP_TOKEN = raw_input('WHAT IS YOUR APP TOKEN: ')
+    while not APP_TOKEN.isalnum() or len(APP_TOKEN) != 30:
+        print APP_TOKEN + " IS NOT VALID."
+        print "APP TOKENS ARE 30 CHARACTER ALPHA-NUMERIC STRINGS"
+        APP_TOKEN = raw_input('WHAT IS YOUR APP TOKEN: ')
+    config.set('Pushover_Notification', 'APP_TOKEN', APP_TOKEN)
+
+    USER_KEY = raw_input('WHAT IS YOUR USER KEY: ')
+    while not USER_KEY.isalnum() or len(USER_KEY) != 30:
+        print USER_KEY + " IS NOT VALID."
+        print "USER KEYS ARE 30 CHARACTER ALPHA-NUMERIC STRINGS"
+        APP_TOKEN = raw_input('WHAT IS YOUR APP TOKEN: ')
+    config.set('Pushover_Notification', 'USER_KEY', USER_KEY)
+
+    # Writing our configuration file to 'example.cfg'
+    with open(cfg_file, 'ab') as configfile:
         config.write(configfile)
 
 ########################################################################
