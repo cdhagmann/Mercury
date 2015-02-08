@@ -9,13 +9,20 @@ import httplib, urllib
 script_path = os.path.dirname(os.path.abspath( __file__ ))
 cfg_file = os.path.join(script_path, 'mercury.cfg')
 
-
 ########################################################################
 ########################################################################
 ########################################################################
 
-smtp_servers = {'gmail': ('smtp.gmail.com', 587),
-              'gmx': ('smtp.gmx.com', (25, 465))}
+smtp_servers = {}
+smtp_servers['gmail'] = ('smtp.gmail.com', (587,))
+smtp_servers['outlook'] = ('smtp.live.com', (587,))
+smtp_servers['gmx'] = ('smtp.gmx.com', (25, 465))
+smtp_servers['office365'] = ('smtp.office365.com', (587,))
+smtp_servers['yahoo mail'] = ('smtp.mail.yahoo.com', (465,))
+smtp_servers['att'] = ('smtp.att.yahoo.com', (465,))
+smtp_servers['hotmail'] = ('smtp.live.com', (587,))
+smtp_servers['comcast'] = ('smtp.comcast.com', (587,))
+smtp_servers['mail.com'] = ('smtp.mail.com', (465,))
 
 #######################################################################
 
@@ -110,12 +117,13 @@ def send_message(to, message=None, From=None, subject=None, debug=False):
     Send message to address(es) passed into the function using the email
     credentials provided in the .cfg file using email_server and create_email.
     """
+    config = load_config('Email_Notification')
     toaddrs, msg = create_email(to, From, subject, message)
 
-    username = config.get('Text_Notification', 'username')
-    fromaddr = config.get('Text_Notification', 'email_address')
-    password = config.get('Text_Notification', 'password')
-    email_provider = config.get('Text_Notification', 'email_provider')
+    username = config.get('Email_Notification', 'username')
+    fromaddr = config.get('Email_Notification', 'email_address')
+    password = config.get('Email_Notification', 'password')
+    email_provider = config.get('Email_Notification', 'email_provider')
 
     with email_server(email_provider, username=username, password=password) as server:
         server.set_debuglevel(debug)
@@ -127,12 +135,16 @@ def text_notification(message, subject=None):
     Sends text notification using send_message to the phone number provided in
     the .cfg file using the email credentials provided in the .cfg file.
     """
+    config = load_config('Text_Notification')
+
     phone_address = config.get('Text_Notification', 'phone_address')
     send_message(phone_address, message=message, From=None,
                      subject=subject, debug=False)
 
 
 def Pushover_Notification(message):
+    config = load_config('Pushover_Notification')
+
     conn = httplib.HTTPSConnection("api.pushover.net:443")
     data = urllib.urlencode({"token": config.get('Pushover_Notification', 'app_token'),
                              "user": config.get('Pushover_Notification', 'user_key'),
@@ -141,27 +153,53 @@ def Pushover_Notification(message):
     conn.request("POST", "/1/messages.json", data, headers)
     conn.getresponse()
 
+
+def Pushbullet_Notification(message, title=None):
+    config = load_config('Pushbullet_Notification')
+
+    from pushbullet import Pushbullet
+    pb = Pushbullet(config.get('Pushbullet_Notification', 'api_key'))
+    pb.push_note('Python Script' if title is None else title, message)
+
 ########################################################################
 ########################################################################
 ########################################################################
 
-def create_cfg_file():
+def load_config(program=None):
+    program_cfg = {'Text_Notification': create_text_cfg_file,
+                   'Email_Notification': create_email_cfg_file,
+                   'Pushover_Notification': create_pushover_cfg_file,
+                   'Pushbullet_Notification': create_pushbullet_cfg_file}
+
+    if not os.path.isfile(cfg_file):
+        if program in program_cfg:
+            program_cfg[program]()
+        elif program is None:
+            for program in program_cfg:
+                program_cfg[program]()
+        else:
+            print program
+    else:
+        config = ConfigParser.RawConfigParser()
+        config.read(cfg_file)
+        if config.has_section(program):
+            return config
+        else:
+            program_cfg[program]()
+
+	return load_config(program)
+
+def create_email_cfg_file():
     '''
     Create the .cfg files that store the account information used by Mercury
     to send text notifications in a Python script. Outputs 'mercury.cfg'
     '''
 
     config = ConfigParser.RawConfigParser()
-    config.add_section('Text_Notification')
-
-    print "CONFIG FILE GENERATOR"
-    print "\tTHIS PROGRAM USES AN ACCOUNT FROM GMX OR GMAIL TO SEND TEXT MESSAGES"
-    print "\tTO USA PHONE NUMBERS. THIS IS THE INITIAL SETUP TO CREATE THE"
-    print "\tCONFIG FILE USED.\n"
+    config.add_section('Email_Notification')
 
     USERNAME = raw_input('WHAT IS YOUR USERNAME (e.g. username): ')
-    config.set('Text_Notification', 'USERNAME', USERNAME)
-
+    config.set('Email_Notification', 'USERNAME', USERNAME)
 
     EMAIL_PROVIDER = raw_input('WHAT IS YOUR EMAIL PROVIDER (e.g. gmail): ')
     while EMAIL_PROVIDER not in smtp_servers:
@@ -170,7 +208,7 @@ def create_cfg_file():
         for sp in smtp_servers:
             print "\t" + sp
         EMAIL_PROVIDER = raw_input('WHAT IS YOUR EMAIL PROVIDER (e.g. gmail): ')
-    config.set('Text_Notification', 'EMAIL_PROVIDER', EMAIL_PROVIDER)
+    config.set('Email_Notification', 'EMAIL_PROVIDER', EMAIL_PROVIDER)
 
     if "@" in USERNAME:
         EMAIL_ADDRESS = USERNAME
@@ -179,9 +217,21 @@ def create_cfg_file():
     else:
         EMAIL_ADDRESS = raw_input('WHAT IS YOUR EMAIL ADDRESS: ')
 
-    config.set('Text_Notification', 'EMAIL_ADDRESS', EMAIL_ADDRESS)
+    config.set('Email_Notification', 'EMAIL_ADDRESS', EMAIL_ADDRESS)
 
-    config.set('Text_Notification', 'PASSWORD', getpass())
+    config.set('Email_Notification', 'PASSWORD', getpass())
+
+    with open(cfg_file, 'ab') as configfile:
+        config.write(configfile)
+
+def create_text_cfg_file():
+    '''
+    Create the .cfg files that store the account information used by Mercury
+    to send text notifications in a Python script. Outputs 'mercury.cfg'
+    '''
+
+    config = ConfigParser.RawConfigParser()
+    config.add_section('Text_Notification')
 
     PHONE_NUMBER = raw_input('WHAT IS THE PHONE NUMBER YOU WANT TO TEXT (e.g. 8015551234): ')
     while not PHONE_NUMBER.isdigit() or len(PHONE_NUMBER) != 10:
@@ -209,15 +259,11 @@ def create_cfg_file():
     config.set('Text_Notification', 'PHONE_ADDRESS', PHONE_ADDRESS)
 
     # Writing our configuration file to 'example.cfg'
-    with open(cfg_file, 'wb') as configfile:
+    with open(cfg_file, 'ab') as configfile:
         config.write(configfile)
 
-    ans = raw_input('DO YOU WANT TO SET UP YOUR PUSHOVER APP AS WELL? [Y/n]')
-    if ans.lower() in ('', 'y', 'yes'):
-        append_cfg_file()
 
-
-def append_cfg_file():
+def create_pushover_cfg_file():
     '''
     Append the .cfg files that store the account information used by Mercury
     to send push notifications in a Python script via Pushover. Appends 'mercury.cfg'
@@ -227,14 +273,14 @@ def append_cfg_file():
     config.add_section('Pushover_Notification')
 
 
-    APP_TOKEN = raw_input('WHAT IS YOUR APP TOKEN: ')
+    APP_TOKEN = raw_input('WHAT IS YOUR PUSHOVER APP TOKEN: ')
     while not APP_TOKEN.isalnum() or len(APP_TOKEN) != 30:
         print APP_TOKEN + " IS NOT VALID."
         print "APP TOKENS ARE 30 CHARACTER ALPHA-NUMERIC STRINGS"
         APP_TOKEN = raw_input('WHAT IS YOUR APP TOKEN: ')
     config.set('Pushover_Notification', 'APP_TOKEN', APP_TOKEN)
 
-    USER_KEY = raw_input('WHAT IS YOUR USER KEY: ')
+    USER_KEY = raw_input('WHAT IS YOUR PUSHOVER USER KEY: ')
     while not USER_KEY.isalnum() or len(USER_KEY) != 30:
         print USER_KEY + " IS NOT VALID."
         print "USER KEYS ARE 30 CHARACTER ALPHA-NUMERIC STRINGS"
@@ -245,14 +291,30 @@ def append_cfg_file():
     with open(cfg_file, 'ab') as configfile:
         config.write(configfile)
 
-########################################################################
-########################################################################
-########################################################################
 
-if not os.path.isfile(cfg_file):
-    print "Script file is ", script_path
-    print "cfg_file is ", cfg_file
-    create_cfg_file()
+def create_pushbullet_cfg_file():
+    '''
+    Append the .cfg files that store the account information used by Mercury
+    to send push notifications in a Python script via Pushover. Appends 'mercury.cfg'
+    '''
 
-config = ConfigParser.RawConfigParser()
-config.read(cfg_file)
+    config = ConfigParser.RawConfigParser()
+    config.add_section('Pushbullet_Notification')
+
+
+    API_KEY = raw_input('WHAT IS YOUR PUSHBULLET API KEY: ')
+    while not API_KEY.isalnum() or len(API_KEY) != 45:
+        print APP_TOKEN + " IS NOT VALID."
+        print "API KEYS ARE 45 CHARACTER ALPHA-NUMERIC STRINGS"
+        APP_TOKEN = raw_input('WHAT IS YOUR APP TOKEN: ')
+    config.set('Pushbullet_Notification', 'API_KEY', API_KEY)
+
+
+    # Writing our configuration file to 'example.cfg'
+    with open(cfg_file, 'ab') as configfile:
+        config.write(configfile)
+
+
+########################################################################
+########################################################################
+########################################################################
