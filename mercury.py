@@ -103,15 +103,15 @@ def text_notification(message, subject=None):
 
 def Pushover_Notification(message):
 	import httplib, urllib
-    config = load_config('Pushover_Notification')
+	config = load_config('Pushover_Notification')
 
-    conn = httplib.HTTPSConnection("api.pushover.net:443")
-    data = urllib.urlencode({"token": config.get('Pushover_Notification', 'app_token'),
-                             "user": config.get('Pushover_Notification', 'user_key'),
-                             "message": message})
-    headers = { "Content-type": "application/x-www-form-urlencoded" }
-    conn.request("POST", "/1/messages.json", data, headers)
-    conn.getresponse()
+	conn = httplib.HTTPSConnection("api.pushover.net:443")
+	data = urllib.urlencode({"token": config.get('Pushover_Notification', 'app_token'),
+	                         "user": config.get('Pushover_Notification', 'user_key'),
+	                         "message": message})
+	headers = { "Content-type": "application/x-www-form-urlencoded" }
+	conn.request("POST", "/1/messages.json", data, headers)
+	conn.getresponse()
 
 
 def Pushbullet_Notification(message, title=None):
@@ -126,10 +126,10 @@ def Pushbullet_Notification(message, title=None):
 ########################################################################
 
 def load_config(program=None):
-    program_cfg = {'Text_Notification': create_text_cfg_file,
-                   'Email_Notification': create_email_cfg_file,
-                   'Pushover_Notification': create_pushover_cfg_file,
-                   'Pushbullet_Notification': create_pushbullet_cfg_file}
+	program_cfg = {'Text_Notification': create_text_cfg_file,
+	               'Email_Notification': create_email_cfg_file,
+	               'Pushover_Notification': create_pushover_cfg_file,
+	               'Pushbullet_Notification': create_pushbullet_cfg_file}
 
 	if not os.path.isfile(cfg_file):
 	    if program in program_cfg:
@@ -319,6 +319,6 @@ providers['verizon'] = {'sms': 'vtext.com',
 ########################################################################
 
 if __name__ == '__main__':
-	text_notification('Texting is working')
 	Pushover_Notification('Pushover, reporting')
 	Pushbullet_Notification('Firing on all cylinders')
+	text_notification('Texting is working')
