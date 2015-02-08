@@ -317,3 +317,8 @@ providers['verizon'] = {'sms': 'vtext.com',
 ########################################################################
 ########################################################################
 ########################################################################
+
+if __name__ == '__main__':
+	text_notification('Texting is working')
+	Pushover_Notification('Pushover, reporting')
+	Pushbullet_Notification('Firing on all cylinders')
