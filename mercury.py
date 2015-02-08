@@ -171,21 +171,21 @@ def load_config(program=None):
                    'Pushover_Notification': create_pushover_cfg_file,
                    'Pushbullet_Notification': create_pushbullet_cfg_file}
 
-    if not os.path.isfile(cfg_file):
-        if program in program_cfg:
-            program_cfg[program]()
-        elif program is None:
-            for program in program_cfg:
-                program_cfg[program]()
-        else:
-            print program
-    else:
-        config = ConfigParser.RawConfigParser()
-        config.read(cfg_file)
-        if config.has_section(program):
-            return config
-        else:
-            program_cfg[program]()
+	if not os.path.isfile(cfg_file):
+	    if program in program_cfg:
+	        program_cfg[program]()
+	    elif program is None:
+	        for program in program_cfg:
+	            program_cfg[program]()
+	    else:
+	        print program
+	else:
+	    config = ConfigParser.RawConfigParser()
+	    config.read(cfg_file)
+	    if config.has_section(program):
+	        return config
+	    else:
+	        program_cfg[program]()
 
 	return load_config(program)
 
