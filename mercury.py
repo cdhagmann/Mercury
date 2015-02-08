@@ -3,7 +3,6 @@ from contextlib import contextmanager
 from email.MIMEText import MIMEText
 import smtplib, requests, ConfigParser, os
 from collections import defaultdict
-import httplib, urllib
 
 
 script_path = os.path.dirname(os.path.abspath( __file__ ))
@@ -12,46 +11,6 @@ cfg_file = os.path.join(script_path, 'mercury.cfg')
 ########################################################################
 ########################################################################
 ########################################################################
-
-smtp_servers = {}
-smtp_servers['gmail'] = ('smtp.gmail.com', (587,))
-smtp_servers['outlook'] = ('smtp.live.com', (587,))
-smtp_servers['gmx'] = ('smtp.gmx.com', (25, 465))
-smtp_servers['office365'] = ('smtp.office365.com', (587,))
-smtp_servers['yahoo mail'] = ('smtp.mail.yahoo.com', (465,))
-smtp_servers['att'] = ('smtp.att.yahoo.com', (465,))
-smtp_servers['hotmail'] = ('smtp.live.com', (587,))
-smtp_servers['comcast'] = ('smtp.comcast.com', (587,))
-smtp_servers['mail.com'] = ('smtp.mail.com', (465,))
-
-#######################################################################
-
-providers = defaultdict(dict)
-providers['alltel'] = {'sms': 'text.wireless.alltel.com',
-                       'mms': 'mms.alltel.net'}
-
-providers['att'] = {'sms': 'txt.att.net',
-                    'mms': 'mms.att.net'}
-
-providers['att'] = {'sms': 'txt.att.net',
-                    'mms': 'mms.att.net'}
-
-providers['boost'] = {'sms': 'myboostmobile.com',
-                      'mms': 'myboostmobile.com'}
-
-providers['cricket'] = {'sms': 'sms.mycricket.com',
-                        'mms': 'mms.mycricket.com'}
-
-providers['sprint'] = {'sms': 'messaging.sprintpcs.com',
-                       'mms': 'pm.sprint.com'}
-
-providers['verizon'] = {'sms': 'vtext.com',
-                        'mms': 'vzwpix.com'}
-
-########################################################################
-########################################################################
-########################################################################
-
 
 @contextmanager
 def email_server(smtp_server, port=25, username=None, password=None):
@@ -143,6 +102,7 @@ def text_notification(message, subject=None):
 
 
 def Pushover_Notification(message):
+	import httplib, urllib
     config = load_config('Pushover_Notification')
 
     conn = httplib.HTTPSConnection("api.pushover.net:443")
@@ -314,6 +274,45 @@ def create_pushbullet_cfg_file():
     with open(cfg_file, 'ab') as configfile:
         config.write(configfile)
 
+
+########################################################################
+#######          GLOBAL DATA USED IN THE PROGRAM ABOVE          ########
+########################################################################
+
+smtp_servers = {}
+smtp_servers['gmail'] = ('smtp.gmail.com', (587,))
+smtp_servers['outlook'] = ('smtp.live.com', (587,))
+smtp_servers['gmx'] = ('smtp.gmx.com', (25, 465))
+smtp_servers['office365'] = ('smtp.office365.com', (587,))
+smtp_servers['yahoo mail'] = ('smtp.mail.yahoo.com', (465,))
+smtp_servers['att'] = ('smtp.att.yahoo.com', (465,))
+smtp_servers['hotmail'] = ('smtp.live.com', (587,))
+smtp_servers['comcast'] = ('smtp.comcast.com', (587,))
+smtp_servers['mail.com'] = ('smtp.mail.com', (465,))
+
+#######################################################################
+
+providers = defaultdict(dict)
+providers['alltel'] = {'sms': 'text.wireless.alltel.com',
+                       'mms': 'mms.alltel.net'}
+
+providers['att'] = {'sms': 'txt.att.net',
+                    'mms': 'mms.att.net'}
+
+providers['att'] = {'sms': 'txt.att.net',
+                    'mms': 'mms.att.net'}
+
+providers['boost'] = {'sms': 'myboostmobile.com',
+                      'mms': 'myboostmobile.com'}
+
+providers['cricket'] = {'sms': 'sms.mycricket.com',
+                        'mms': 'mms.mycricket.com'}
+
+providers['sprint'] = {'sms': 'messaging.sprintpcs.com',
+                       'mms': 'pm.sprint.com'}
+
+providers['verizon'] = {'sms': 'vtext.com',
+                        'mms': 'vzwpix.com'}
 
 ########################################################################
 ########################################################################
